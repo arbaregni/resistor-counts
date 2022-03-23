@@ -1,14 +1,22 @@
 package main
 
-import "github.com/arbaregni/resistor-counts/rationals"
 import "fmt"
+import "os"
+import "strconv"
 
 func main() {
-	r := rationals.MakeRational(1, 3)
-	s := rationals.MakeRational(2, 4)
+    n := func() int {
+        if len(os.Args) < 2 {
+            fmt.Println("Missing required argument <n>")
+            return 10
+        }
+        arg := os.Args[1]
+        n, _ := strconv.ParseInt(arg,0,64)
+        return int(n)
+    }()
 
-	fmt.Printf("%v || %v = %v\n", r, s, r.Harmonic(s))
+    fmt.Printf("generating R^%v\n", n)
 
-	s = rationals.Inf()
-	fmt.Printf("%v || %v = %v\n", r, s, r.Harmonic(s))
+    Generate(n)
+
 }
