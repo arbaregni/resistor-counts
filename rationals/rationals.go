@@ -61,6 +61,11 @@ func (r Rational) Harmonic(s Rational) Rational {
     return inv.Reciprocal()
 }
 
+// Equals compares two rationals.
+func (r Rational) Equals(s Rational) bool {
+    return r.n * s.d == s.n * r.d
+}
+
 // AsFloat divides out the numerator and denominator,
 // returning NaN, false if the denominator was zero.
 func (r Rational) AsFloat() (float64, bool) {
@@ -86,3 +91,9 @@ func (r Rational) Denominator() int { return r.d }
 
 // Inf returns the rational representing the point at infinity.
 func Inf() Rational { return Rational{1, 0} }
+
+// Zero returns the rational representing 0.
+func Zero() Rational { return Rational{0,1} }
+
+// One returns the rational representing 1.
+func One() Rational { return Rational{1,1} }
