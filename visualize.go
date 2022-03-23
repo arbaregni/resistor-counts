@@ -22,7 +22,7 @@ func drawTick(img Changeable, col color.Color, x0, y0, width, height int) {
 func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
     n := len(layers)
 
-    width = 128
+    width = 1024
     layerSize := 16
     tickSize := 1
     height = n * layerSize
@@ -42,9 +42,10 @@ func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
             frac := pct * float64(width) // frac is in the range [0 width]
             x := int(frac)
 
-            y := layerSize * c
+            y := layerSize * (c - 1)
 
-            drawTick(img, tickCol, x, y, tickSize, layerSize)
+            rem := height - y
+            drawTick(img, tickCol, x, y, tickSize, rem)
         }
     }
 
