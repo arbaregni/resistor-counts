@@ -9,54 +9,78 @@ import (
 // Generate prints out the n-resistor constructable numbers.
 func Generate(n int) {
 
-    // we expect something like n^3 rationals to be generated
+    // we expect something like n^3 rationals to be generated <--- this can be improved
     est := n*n*n
 
     // Map each rational to its resistor count
     count := make(map[rationals.Rational]int, est)
 
-    visit := func(layer []rationals.Rational, c int, r rationals.Rational) []rationals.Rational {
+    // layers[n] is the set of n-resistor constructable numbers
+    layers := make([][]rationals.Rational, n + 1)
+
+    // Call this function whenever we see a new rational:
+    // c is the current resistor count (i.e. which layer we are on)
+    // r is the rational we have constructed
+    visit := func(c int, r rationals.Rational) {
         if _, ok := count[r]; ok {
             // already seen, bail out early
-            return layer
+            return
         }
         count[r] = c
-        return append(layer, r)
+        layers[c] = append(layers[c], r)
     }
 
-    // For easy iteration, keep a slice of the rationals we have seen before
-    seen := make([]rationals.Rational, 0, est)
+    // We start with a 1 ohm resistor
+    visit(1, rationals.One())
 
-//    visit(seen, 0, rationals.MakeRational(0,1))
-    seen = visit(seen, 1, rationals.MakeRational(1,1))
+    // loop over each layer
+    for c := 2; c <= n; c++ {
 
 
-    fmt.Println(seen)
-    fmt.Println(count)
+        // loop over all the ways to add up to c using positive integers
+        foundOne := false
+        for i := 1; i <= c/2; i++ {
 
-    // The current level we are on
-    c := 2
-    for c <= n {
+            j := c - i
 
-        layer := make([]rationals.Rational, 0, c*c)
+            for _, r := range layers[i] {
+                for _, s := range layers[j] {
 
-        for i, r := range seen {
-            for j, s := range seen {
-                if j < i {
-                    continue
+                    p := r.Add(s)
+                    q := r.Harmonic(s)
+                    visit(c, p)
+                    visit(c, q)
+
+                    if !foundOne && (p.Equals(rationals.One()) || q.Equals(rationals.One())) {
+                        foundOne = true
+                    }
+
                 }
-
-                layer = visit(layer, c, r.Add(s))
-                layer = visit(layer, c, r.Harmonic(s))
             }
+
         }
 
-        fmt.Printf("Layer %v (%v elements)", c, len(layer))
 
-        seen = append(seen, layer...)
-        c += 1
+        if foundOne {
+            fmt.Printf("Found a 1 on layer %v!\n", c)
+        }
+        fmt.Printf("Layer %v (%v elements)", c, len(layers[c]))
+        /*
+        for i, r := range layers[c] {
+            if i % 10 == 0 {
+                fmt.Println()
+            }
+            fmt.Printf("    %v", r)
+        }
 
+        */
+        fmt.Println()
+
+        /*
+        fmt.Printf("[press enter to generate layer %v]", c+1)
         fmt.Scanln()
+        */
+
     }
 
 }
