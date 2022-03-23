@@ -1,3 +1,6 @@
 module github.com/arbaregni/resistor-counts
 
-go 1.17
+replace github.com/arbaregni/resistor-counts/rationals => ./rationals
+
+
+go 1.18
