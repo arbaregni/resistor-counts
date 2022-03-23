@@ -1,55 +1,60 @@
 package main
 
 import (
-    "github.com/arbaregni/resistor-counts/rationals"
+	"github.com/arbaregni/resistor-counts/rationals"
 
-    "image"
-    "image/color"
+	"image"
+	"image/color"
+	"log"
+	"math"
 )
 
 // images that we can change
 type changeable interface {
-    Set(x,y int, col color.Color)
+	Set(x, y int, col color.Color)
 }
 
 func drawTick(img changeable, col color.Color, x0, y0, width, height int) {
-    for y := y0; y < y0 + height; y++ {
-        for x := x0; x < x0 + width; x++ {
-            img.Set(x,y, col)
-        }
-    }
+	for y := y0; y < y0+height; y++ {
+		for x := x0; x < x0+width; x++ {
+			img.Set(x, y, col)
+		}
+	}
 }
 
 // Visualize constructs the diagram depicting the construction layers (ignoring width and height for now).
 func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
-    n := len(layers)
+	n := float64(len(layers))
 
-    width = 1024
-    layerSize := 16
-    tickSize := 1
-    height = n * layerSize
+	width = 1024
+	layerSize := 16
+	tickSize := 1
+	height = len(layers) * layerSize
 
-    img := image.NewRGBA(image.Rect(0, 0, width, height))
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-    tickCol := color.Black
+	tickCol := color.Black
 
-    for c := range layers {
-        for _, r := range layers[c] {
-            // r is in the range [0 n]
-            f, ok := r.AsFloat()
-            if !ok {
-                continue
-            }
-            pct := f / float64(n)  // pct is in the range [0 1]
-            frac := pct * float64(width) // frac is in the range [0 width]
-            x := int(frac)
+	for c := range layers {
+		for _, r := range layers[c] {
+			// f is in the range [1/n n]
+			f, ok := r.AsFloat()
+			if !ok {
+				log.Println("ignoring NaN in visualize")
+				continue
+			}
+			f = math.Log(f)             // remap to [-log(n) log(n)]
+			f += math.Log(n)            // remap to [0 2log(n)]
+			f = f / (2.0 * math.Log(n)) // remap to [0 1]
+			f = f * float64(width)      // remap to [0 width]
 
-            y := layerSize * (c - 1)
+			x := int(f)
+			y := layerSize * (c - 1)
+			rem := height - y
 
-            rem := height - y
-            drawTick(img, tickCol, x, y, tickSize, rem)
-        }
-    }
+			drawTick(img, tickCol, x, y, tickSize, rem)
+		}
+	}
 
-    return img
+	return img
 }

@@ -1,90 +1,176 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
+	"log"
 
-    "github.com/arbaregni/resistor-counts/rationals"
+	"github.com/arbaregni/resistor-counts/rationals"
 )
 
 const noisy = false
 
-// Generate returns a slice of layers, where layers[c] contains the set of c-resistor constructable numbers for c=0,1...n
-func Generate(n int) [][]rationals.Rational {
+// Op enumerates the operations we can use in making RC-numbers.
+type Op int
 
-    // we expect something like n^3 rationals to be generated <--- this can be improved
-    est := n*n*n
+const (
+	None Op = iota
+	Series
+	Parallel
+)
 
-    // Map each rational to its resistor count
-    count := make(map[rationals.Rational]int, est)
-
-    layers := make([][]rationals.Rational, n + 1)
-
-    // Call this function whenever we see a new rational:
-    // c is the current resistor count (i.e. which layer we are on)
-    // r is the rational we have constructed
-    visit := func(c int, r rationals.Rational) {
-        if _, ok := count[r]; ok {
-            // already seen, bail out early
-            return
-        }
-        count[r] = c
-        layers[c] = append(layers[c], r)
-    }
-
-    // We start with a 1 ohm resistor
-    visit(1, rationals.One())
-
-    // loop over each layer
-    for c := 2; c <= n; c++ {
-
-        // loop over all the ways to add up to c using positive integers
-        foundOne := false
-        for i := 1; i <= c/2; i++ {
-
-            j := c - i
-
-            for _, r := range layers[i] {
-                for _, s := range layers[j] {
-
-                    p := r.Add(s)
-                    q := r.Harmonic(s)
-                    visit(c, p)
-                    visit(c, q)
-
-                    if !foundOne && (p.Equals(rationals.One()) || q.Equals(rationals.One())) {
-                        foundOne = true
-                    }
-
-                }
-            }
-
-        }
-
-
-        if noisy {
-            if foundOne {
-                fmt.Printf("Found a 1 on layer %v!\n", c)
-            }
-            fmt.Printf("Layer %v (%v elements)\n", c, len(layers[c]))
-            fmt.Printf("[press enter to show]", c+1)
-            fmt.Scanln()
-            for i, r := range layers[c] {
-                if i != 0 && i % 10 == 0 {
-                    fmt.Println()
-                }
-                fmt.Printf("    %v", r)
-            }
-            fmt.Println()
-        }
-
-    }
-
-    return layers
+// Action represents how we construct new RC-numbers.
+type Action struct {
+	op         Op
+	arg1, arg2 rationals.Rational
 }
 
+// DP stores the solutions to the dynamic program.
+type DP struct {
+	// Map each rational to its resistor count
+	count map[rationals.Rational]int
+	// Map each rational to how we got here
+	backtrack map[rationals.Rational]Action
+	// Each layer[c] holds the set of c-resistor constructable numbers
+	layers [][]rationals.Rational
+}
 
+// NewDP allocates a dynamic program.
+// The parameter n is a hint on how much memory to allocate.
+func NewDP(n int) *DP {
+	// we expect something like n^3 rationals to be generated <--- this can be improved
+	est := n * n * n
 
+	dp := &DP{}
+	dp.count = make(map[rationals.Rational]int, est)
+	dp.backtrack = make(map[rationals.Rational]Action, est)
+	dp.layers = make([][]rationals.Rational, 2, n+1)
 
+	return dp
+}
 
+// Call this function whenever we see a (potentially) new rational:
+// c is the current resistor count (i.e. which layer we are on)
+// r is the rational we have constructed
+func (dp *DP) visit(c int, r rationals.Rational, a Action) {
+	if _, ok := dp.count[r]; ok {
+		// already seen, bail out early
+		return
+	}
+	dp.count[r] = c
+	dp.backtrack[r] = a
+	dp.layers[c] = append(dp.layers[c], r)
+}
 
+// Generate returns a slice of layers, where layers[c] contains the set of c-resistor constructable numbers for c=0,1...n
+func (dp *DP) Generate(n int) [][]rationals.Rational {
+	// check if we have already computed the solution
+	if n < len(dp.layers) {
+		return dp.layers[:n+1]
+	}
 
+	// OK, so now we have to generate more solutions
+
+	// We start with a 1 ohm resistor
+	dp.visit(1, rationals.One(), Action{})
+
+	// loop over each layer, until we have enough layers
+	for len(dp.layers) <= n {
+		c := len(dp.layers)
+		{
+			l := make([]rationals.Rational, 0, c*c) // estimate c^2 new numbers
+			dp.layers = append(dp.layers, l)
+		}
+
+		// loop over all the ways to add up to c using positive integers
+		foundOne := false
+		for i := 1; i <= c/2; i++ {
+
+			j := c - i
+
+			for _, r := range dp.layers[i] {
+				for _, s := range dp.layers[j] {
+
+					p := r.Add(s)
+					q := r.Harmonic(s)
+					dp.visit(c, p, Action{Series, r, s})
+					dp.visit(c, q, Action{Parallel, r, s})
+
+					if noisy {
+						if !foundOne && (p.Equals(rationals.One()) || q.Equals(rationals.One())) {
+							foundOne = true
+						}
+					}
+
+				}
+			}
+
+		}
+
+		if noisy {
+			if foundOne {
+				fmt.Printf("Found a 1 on layer %v!\n", c)
+			}
+			fmt.Printf("Layer %v (%v elements)\n", c, len(dp.layers[c]))
+			fmt.Printf("[press enter to show]", c+1)
+			fmt.Scanln()
+			for i, r := range dp.layers[c] {
+				if i != 0 && i%10 == 0 {
+					fmt.Println()
+				}
+				fmt.Printf("    %v", r)
+			}
+			fmt.Println()
+		}
+
+	}
+
+	return dp.layers
+}
+
+// Construct returns the formula we used to construct `r` (if we have already constructed r),
+// elsewise returning "" and false.
+func (dp *DP) Construct(r rationals.Rational) (string, bool) {
+	return dp.constructHelper(r, None)
+}
+func (dp *DP) constructHelper(r rationals.Rational, parentOp Op) (string, bool) {
+	a, ok := dp.backtrack[r]
+	if !ok {
+		return "", false
+	}
+
+	// Found a terminal value
+	if a.op == None {
+		if r.Denominator() == 1 {
+			return fmt.Sprintf("%v", r.Numerator()), true
+		}
+		return r.String(), true
+	}
+
+	left, ok := dp.constructHelper(a.arg1, a.op)
+	if !ok {
+		log.Println("Missing backtrack info for ", a)
+		return "", false
+	}
+
+	right, ok := dp.constructHelper(a.arg2, a.op)
+	if !ok {
+		log.Println("Missing backtrack info for ", a)
+		return "", false
+	}
+
+	var s string
+	switch a.op {
+	case Series:
+		s = fmt.Sprintf("%v + %v", left, right)
+	case Parallel:
+		s = fmt.Sprintf("%v || %v", left, right)
+	default:
+		s = fmt.Sprintf("%v ? %v", left, right)
+	}
+
+	if a.op != parentOp {
+		s = fmt.Sprintf("(%v)", s)
+	}
+
+	return s, true
+}
