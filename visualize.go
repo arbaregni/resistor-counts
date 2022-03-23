@@ -7,11 +7,12 @@ import (
     "image/color"
 )
 
-type Changeable interface {
+// images that we can change
+type changeable interface {
     Set(x,y int, col color.Color)
 }
 
-func drawTick(img Changeable, col color.Color, x0, y0, width, height int) {
+func drawTick(img changeable, col color.Color, x0, y0, width, height int) {
     for y := y0; y < y0 + height; y++ {
         for x := x0; x < x0 + width; x++ {
             img.Set(x,y, col)
@@ -19,6 +20,7 @@ func drawTick(img Changeable, col color.Color, x0, y0, width, height int) {
     }
 }
 
+// Visualize constructs the diagram depicting the construction layers (ignoring width and height for now).
 func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
     n := len(layers)
 
