@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "os"
 import "strconv"
+import "image/png"
 
 func main() {
     n := func() int {
@@ -16,7 +17,16 @@ func main() {
     }()
 
     fmt.Printf("generating R^%v\n", n)
+    layers := Generate(n)
 
-    Generate(n)
+    fmt.Printf("creating image....\n")
+    img := Visualize(layers, 256, 256)
 
+    file, err := os.Create("image.png")
+    if err != nil {
+        fmt.Println("Problems creating image file:", err)
+    }
+    defer file.Close()
+
+    png.Encode(file, img)
 }
