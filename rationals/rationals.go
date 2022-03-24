@@ -83,6 +83,9 @@ func (r Rational) String() string {
     return fmt.Sprintf("%v//%v", r.n, r.d)
 }
 
+// IsNeg tests if the rational is negative.
+func (r Rational) IsNeg() bool { return r.n < 0 }
+
 // Numerator returns the numerator n of the rational n/d, in its most reduced form.
 func (r Rational) Numerator() int { return r.n }
 
