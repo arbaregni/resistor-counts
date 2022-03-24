@@ -121,9 +121,11 @@ func main() {
         }
     }
     if args.flags & DoDerive != 0 {
-        r := rationals.MakeRational(3, 4)
+        r := rationals.MakeRational(args.p, args.q)
         formula := dp.Derive(r)
-        fmt.Printf("%v = %v\n", r, formula)
+        c := strings.Count(formula, "1")
+        fmt.Printf("Found on layer %v, expanded to %v layers\n", c, dp.N())
+        fmt.Println(formula)
     }
 
     if args.flags & DoVisualize != 0 {

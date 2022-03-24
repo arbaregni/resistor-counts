@@ -43,7 +43,12 @@ func NewDP(n int) *DP {
 	dp := &DP{}
 	dp.count = make(map[rationals.Rational]int, est)
 	dp.backtrack = make(map[rationals.Rational]Action, est)
-	dp.layers = make([][]rationals.Rational, 2, n+1)
+
+    cp := n+1
+    if 2 > cp {
+        cp = 2
+    }
+	dp.layers = make([][]rationals.Rational, 2, cp)
 
 	return dp
 }
@@ -124,15 +129,28 @@ func (dp *DP) N() int {
 
 // Derive returns the formula we used to construct `r` 
 func (dp *DP) Derive(r rationals.Rational) string {
-    // attempt to make r
+    isNeg := false
+    switch {
+    case r.Equals(rationals.Zero()):
+        return "0"
+    case r.Equals(rationals.Inf()):
+        return "inf"
+    case r.IsNeg():
+        isNeg = true
+        r = rationals.MakeRational(-r.Numerator(), r.Denominator())
+    }
     s, ok := dp.deriveHelper(r, None)
     for !ok {
         // try the next layer
         dp.Generate(dp.N() + 1)
         s, ok = dp.deriveHelper(r, None)
     }
-    // snip off the leading and trailing ( )
-    s = s[1:len(s)-1]
+    if isNeg {
+        s = fmt.Sprintf("-%v", s)
+    } else {
+        // snip off the leading and trailing ( )
+        s = s[1:len(s)-1]
+    }
     return s
 }
 func (dp *DP) deriveHelper(r rationals.Rational, parentOp Op) (string, bool) {
