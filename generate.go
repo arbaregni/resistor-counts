@@ -137,7 +137,7 @@ func (dp *DP) Derive(r rationals.Rational) string {
         return "inf"
     case r.IsNeg():
         isNeg = true
-        r = rationals.MakeRational(-r.Numerator(), r.Denominator())
+        r = rationals.MakeRational(-r.N(), r.D())
     }
     s, ok := dp.deriveHelper(r, None)
     for !ok {
@@ -161,8 +161,8 @@ func (dp *DP) deriveHelper(r rationals.Rational, parentOp Op) (string, bool) {
 
 	// Found a terminal value
 	if a.op == None {
-		if r.Denominator() == 1 {
-			return fmt.Sprintf("%v", r.Numerator()), true
+		if r.D() == 1 {
+			return fmt.Sprintf("%v", r.N()), true
 		}
 		return r.String(), true
 	}

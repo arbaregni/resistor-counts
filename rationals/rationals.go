@@ -86,11 +86,11 @@ func (r Rational) String() string {
 // IsNeg tests if the rational is negative.
 func (r Rational) IsNeg() bool { return r.n < 0 }
 
-// Numerator returns the numerator n of the rational n/d, in its most reduced form.
-func (r Rational) Numerator() int { return r.n }
+// N returns the numerator n of the rational n/d, in its most reduced form.
+func (r Rational) N() int { return r.n }
 
-// Denominator returns the denominator d of the rational n/d, in its most reduced form.
-func (r Rational) Denominator() int { return r.d }
+// D returns the denominator d of the rational n/d, in its most reduced form.
+func (r Rational) D() int { return r.d }
 
 // Inf returns the rational representing the point at infinity.
 func Inf() Rational { return Rational{1, 0} }
