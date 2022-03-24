@@ -12,7 +12,7 @@ import "github.com/arbaregni/resistor-counts/rationals"
 type ArgFlags = int
 const (
     NoFlags ArgFlags = 1 << iota
-    ShowLayers
+    DoShowLayers
     DoDerive
     DoVisualize
     Quit
@@ -35,7 +35,7 @@ func ParseArgs(cmdargs []string) (Args, bool) {
     cmd, cmdargs := cmdargs[1], cmdargs[2:]
     switch cmd {
     case "layer":
-        args.flags |= ShowLayers
+        args.flags |= DoShowLayers
         if len(cmdargs) < 1 {
             fmt.Println("Missing required parameter <n>. How many layers should I generate?")
             return args, false
@@ -107,19 +107,36 @@ func main() {
 	fmt.Printf("generating R^%v\n", args.n)
 
 
-	r := rationals.MakeRational(3, 4)
-	formula, _ := dp.Construct(r)
-	fmt.Printf("%v = %v\n", r, formula)
+    if args.flags & DoShowLayers != 0 {
+        wrapno := 10
+        for c := range layers {
+            fmt.Printf("Layer %v (%v elements):\n", c, len(layers[c]))
+            for i, r := range layers[c] {
+                if i != 0 && i % wrapno == 0 {
+                    fmt.Println()
+                }
+                fmt.Printf("    %v", r)
+            }
+            fmt.Println()
+        }
+    }
+    if args.flags & DoDerive != 0 {
+        r := rationals.MakeRational(3, 4)
+        formula := dp.Derive(r)
+        fmt.Printf("%v = %v\n", r, formula)
+    }
 
-	fmt.Printf("creating image....\n")
-	img := Visualize(layers, 256, 256)
+    if args.flags & DoVisualize != 0 {
+        fmt.Printf("creating image....\n")
+        img := Visualize(layers, 256, 256)
 
-	file, err := os.Create("image.png")
-	if err != nil {
-		fmt.Println("Problems creating image file:", err)
-	}
-	defer file.Close()
+        file, err := os.Create(args.filename)
+        defer file.Close()
+        if err != nil {
+            fmt.Println("Problems creating image file:", err)
+        }
 
-	png.Encode(file, img)
+        png.Encode(file, img)
+    }
 
 }

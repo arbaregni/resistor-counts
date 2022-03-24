@@ -110,16 +110,6 @@ func (dp *DP) Generate(n int) [][]rationals.Rational {
 			if foundOne {
 				fmt.Printf("Found a 1 on layer %v!\n", c)
 			}
-			fmt.Printf("Layer %v (%v elements)\n", c, len(dp.layers[c]))
-			fmt.Printf("[press enter to show]", c+1)
-			fmt.Scanln()
-			for i, r := range dp.layers[c] {
-				if i != 0 && i%10 == 0 {
-					fmt.Println()
-				}
-				fmt.Printf("    %v", r)
-			}
-			fmt.Println()
 		}
 
 	}
@@ -127,12 +117,25 @@ func (dp *DP) Generate(n int) [][]rationals.Rational {
 	return dp.layers
 }
 
-// Construct returns the formula we used to construct `r` (if we have already constructed r),
-// elsewise returning "" and false.
-func (dp *DP) Construct(r rationals.Rational) (string, bool) {
-	return dp.constructHelper(r, None)
+// N returns the resistor count of the deepest expanded layer.
+func (dp *DP) N() int {
+    return len(dp.layers) - 1
 }
-func (dp *DP) constructHelper(r rationals.Rational, parentOp Op) (string, bool) {
+
+// Derive returns the formula we used to construct `r` 
+func (dp *DP) Derive(r rationals.Rational) string {
+    // attempt to make r
+    s, ok := dp.deriveHelper(r, None)
+    for !ok {
+        // try the next layer
+        dp.Generate(dp.N() + 1)
+        s, ok = dp.deriveHelper(r, None)
+    }
+    // snip off the leading and trailing ( )
+    s = s[1:len(s)-1]
+    return s
+}
+func (dp *DP) deriveHelper(r rationals.Rational, parentOp Op) (string, bool) {
 	a, ok := dp.backtrack[r]
 	if !ok {
 		return "", false
@@ -146,13 +149,13 @@ func (dp *DP) constructHelper(r rationals.Rational, parentOp Op) (string, bool) 
 		return r.String(), true
 	}
 
-	left, ok := dp.constructHelper(a.arg1, a.op)
+	left, ok := dp.deriveHelper(a.arg1, a.op)
 	if !ok {
 		log.Println("Missing backtrack info for ", a)
 		return "", false
 	}
 
-	right, ok := dp.constructHelper(a.arg2, a.op)
+	right, ok := dp.deriveHelper(a.arg2, a.op)
 	if !ok {
 		log.Println("Missing backtrack info for ", a)
 		return "", false
