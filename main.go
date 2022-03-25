@@ -6,6 +6,7 @@ import "log"
 import "strconv"
 import "strings"
 import "image/png"
+import "image"
 
 import "github.com/arbaregni/resistor-counts/rationals"
 import "github.com/arbaregni/resistor-counts/visualize"
@@ -16,6 +17,8 @@ const (
     DoShowLayers
     DoDerive
     DoVisualize
+    DoLineViz
+    DoHeatViz
     Quit
 )
 
@@ -52,6 +55,19 @@ func ParseArgs(cmdargs []string) (Args, bool) {
         args.q, _ = strconv.Atoi(cmdargs[1])
     case "visual":
         args.flags |= DoVisualize
+        if len(cmdargs) < 1 {
+            fmt.Println("Missing required parameter <diagram>. What visualization should I do?")
+            return args, false
+        }
+        diagram, cmdargs := cmdargs[0], cmdargs[1:]
+        switch diagram {
+        case "lines":
+            args.flags |= DoLineViz
+        case "heat":
+            args.flags |= DoHeatViz
+        default:
+            fmt.Printf("Unknown diagram name `%v`.\n", diagram)
+        }
         if len(cmdargs) < 1 {
             fmt.Println("Missing required parameter <n>. How many layers should I generate?")
             return args, false
@@ -90,10 +106,10 @@ func PrintHelp() {
     fmt.Println()
     fmt.Println("The commands are:")
     fmt.Println()
-    fmt.Println("    layer <n>                              generate and display the n-resistor constructable numbers")
-    fmt.Println("    derive <p> <q>                         derive the RC formula for the rational number p/q")
-    fmt.Println("    visual <n> [filename] [options...]     generate the n-resistor constructable numbers and create the visualization")
-    fmt.Println("                                               writing it to a file named filename (defaults to image.png)")
+    fmt.Println("    layer <n>                                           generate and display the n-resistor constructable numbers")
+    fmt.Println("    derive <p> <q>                                      derive the RC formula for the rational number p/q")
+    fmt.Println("    visual <lines|heat> <n> [filename] [options...]     generate the n-resistor constructable numbers and create the visualization")
+    fmt.Println("                                                            writing it to a file named filename (defaults to image.png)")
 }
 
 func main() {
@@ -131,7 +147,14 @@ func main() {
 
     if args.flags & DoVisualize != 0 {
         fmt.Printf("creating image....\n")
-        img := visualize.LineDiagram(layers)
+
+        var img image.Image
+        if args.flags & DoLineViz != 0 {
+            img = visualize.LineDiagram(layers)
+        }
+        if args.flags & DoHeatViz != 0 {
+            img = visualize.HeatDiagram(layers)
+        }
 
         file, err := os.Create(args.filename)
         defer file.Close()
