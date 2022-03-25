@@ -22,14 +22,14 @@ func drawTick(img changeable, col color.Color, x0, y0, width, height int) {
 	}
 }
 
-// Visualize constructs the diagram depicting the construction layers (ignoring width and height for now).
-func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
+// LineDiagram constructs the diagram depicting the construction layers
+func LineDiagram(layers [][]rationals.Rational) image.Image {
 	n := float64(len(layers))
 
-	width = 1024
+    width := 1024
 	layerSize := 16
 	tickSize := 1
-	height = len(layers) * layerSize
+    height := len(layers) * layerSize
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
@@ -58,3 +58,5 @@ func Visualize(layers [][]rationals.Rational, width, height int) image.Image {
 
 	return img
 }
+
+

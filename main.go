@@ -131,7 +131,7 @@ func main() {
 
     if args.flags & DoVisualize != 0 {
         fmt.Printf("creating image....\n")
-        img := visualize.Visualize(layers, 256, 256)
+        img := visualize.LineDiagram(layers)
 
         file, err := os.Create(args.filename)
         defer file.Close()
