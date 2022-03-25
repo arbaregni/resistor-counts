@@ -2,7 +2,7 @@ package visualize
 
 import (
 	"github.com/arbaregni/resistor-counts/rationals"
-
+//	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -80,37 +80,37 @@ func HeatDiagram(layers [][]rationals.Rational) image.Image {
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-    startCol := color.RGBA{92, 10, 10, 0xff} // dark red
-    endCol   := color.RGBA{100, 167, 222, 0xff} // light blue
+    startCol := color.RGBA{0, 0, 0, 0xff} // dark red
+    endCol   := color.RGBA{255, 0, 0, 0xff} // light blue
 
     n := float64(len(layers))
 
-    for c := range layers {
-        for _, r := range layers[c] {
-            x := cellSize * (r.N() - 1)
-            y := cellSize * (r.D() - 1)
-
-            col := lerpCol(startCol, endCol, float64(c)/n)
-
-            drawTick(img, col, x, y, cellSize, cellSize)
-        }
-
-    }
-
+	for c := range layers {
+		for _, r := range layers[c] {
+			col := lerpCol(startCol, endCol, float64(c)/n)
+			
+			for k := 1; (k*r.N() <= width) && (k*r.D() <= height); k++ {
+				x := cellSize * k * r.N()
+				y := cellSize * k * r.D()
+				drawTick(img, col, x, y, cellSize, cellSize)
+			}
+		}
+	}
     return img
 }
 
 func lerpCol(col1, col2 color.Color, t float64) color.Color {
-    r1, b1, g1, a1 := col1.RGBA()
-    r2, b2, g2, a2 := col2.RGBA()
-    r := lerp(r1, r2, t)
-    b := lerp(b1, b2, t)
-    g := lerp(g1, g2, t)
+    r1, g1, b1, a1 := col1.RGBA()
+    r2, g2, b2, a2 := col2.RGBA()
+    r := lerp(r1/257, r2/257, t)
+    g := lerp(g1/257, g2/257, t)
+    b := lerp(b1/257, b2/257, t)
     a := lerp(a1, a2, t)
-    return color.RGBA{r,b,g,a}
+	
+    return color.RGBA{r,g,b,a}
 }
 func lerp(a, b uint32, t float64) uint8 {
-    return uint8(float64(a) + (float64(b)-float64(a)) * t)
+    return uint8(float64(a) * t + float64(b) * (1 - t))
 }
 
 
