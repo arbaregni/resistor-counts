@@ -1,4 +1,4 @@
-package main
+package visualize
 
 import (
 	"github.com/arbaregni/resistor-counts/rationals"

@@ -8,6 +8,7 @@ import "strings"
 import "image/png"
 
 import "github.com/arbaregni/resistor-counts/rationals"
+import "github.com/arbaregni/resistor-counts/visualize"
 
 type ArgFlags = int
 const (
@@ -130,7 +131,7 @@ func main() {
 
     if args.flags & DoVisualize != 0 {
         fmt.Printf("creating image....\n")
-        img := Visualize(layers, 256, 256)
+        img := visualize.Visualize(layers, 256, 256)
 
         file, err := os.Create(args.filename)
         defer file.Close()
