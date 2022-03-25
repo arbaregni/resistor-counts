@@ -80,8 +80,8 @@ func HeatDiagram(layers [][]rationals.Rational) image.Image {
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-    startCol := color.RGBA{0, 0, 0, 0xff} // dark red
-    endCol   := color.RGBA{255, 0, 0, 0xff} // light blue
+    startCol := color.RGBA{0, 0, 0, 0xff}
+    endCol   := color.RGBA{255, 0, 0, 0xff}
 
     n := float64(len(layers))
 
