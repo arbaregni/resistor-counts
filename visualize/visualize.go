@@ -110,7 +110,7 @@ func lerpCol(col1, col2 color.Color, t float64) color.Color {
     return color.RGBA{r,g,b,a}
 }
 func lerp(a, b uint32, t float64) uint8 {
-    return uint8(float64(a) * t + float64(b) * (1 - t))
+	return uint8(float64(a) + (float64(b) - float64(a)) * t)
 }
 
 
